@@ -1,0 +1,5 @@
+- name: Execute shell command
+  hosts: linux
+  become: true
+  tasks:
+    ansible.builtin.shell: "{{ shell_command }}"
