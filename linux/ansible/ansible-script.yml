@@ -1,0 +1,5 @@
+- name: Transfer a local script to remote host and execute it
+  hosts: linux
+  become: true
+  tasks:
+    ansible.builtin.script: "{{ script }}"
