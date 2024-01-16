@@ -6,18 +6,16 @@ Import-Module ActiveDirectory
 #Formats Group Users into CSV
 Get-ADGroupMember $Group -recursive | Select-Object SamAccountName | Export-Csv -Path $Csv -NoTypeInformation;
 $accts = Import-Csv -Path $Csv -Delimiter ',' -Encoding Default 
-
 foreach($user in $accts) {
     $Pass=-join ("!@#$%^&*0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".tochararray() | ForEach-Object {[char]$_} | Get-Random -Count $length)
 
     Add-Member -InputObject $user -MemberType NoteProperty -Name "Password" -Value $Pass
 }
-
 $accts | Export-Csv -Path $Csv -Delimiter ',' -NoTypeInformation;
 
 #Passwords are changed based on CSV file
 $bulkpass = Import-Csv $Csv
-foreach ($Users in $bulkpass) {
+foreach($Users in $bulkpass) {
     Set-ADAccountPassword -Identity $Users.SamAccountName -Reset -NewPassword (ConvertTo-SecureString $Users.Password -AsPlainText -Force)
 }
 
