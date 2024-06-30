@@ -1,0 +1,17 @@
+[req]
+defaul_bits        = 2048
+distinguished_name = req_distinguished_name
+req_extensions     = req_ext
+prompt  = no
+[req_distinguished_name]
+countryName                = <country-name-goes-here> (ex. US)
+stateOrProvinceName        = <state/province-name-here>
+localityName               = <locale/town-name-here>
+organizationName           = <org-name-here> (ex. ChampCCDC-Team)
+organizationalUnitName     = <org-unit-name-here>
+emailAddress               = <email-address-here>
+commonName                 = <full-domain-name-goes-here> (ex. example-website.domain-name.local)
+[req_ext]
+subjectAltName = @alt_names
+[alt_names]
+DNS.1  = <hostname_goes_here>
