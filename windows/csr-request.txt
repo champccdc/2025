@@ -8,7 +8,7 @@ countryName                = <country-name-goes-here> (ex. US)
 stateOrProvinceName        = <state/province-name-here>
 localityName               = <locale/town-name-here>
 organizationName           = <org-name-here> (ex. ChampCCDC-Team)
-organizationalUnitName     = <org-unit-name-here>
+organizationalUnitName     = <org-unit-name-here> (ex. Real-Work-Department)
 emailAddress               = <email-address-here>
 commonName                 = <full-domain-name-goes-here> (ex. example-website.domain-name.local)
 [req_ext]
