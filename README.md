@@ -1,2 +1,2 @@
-# 2024
-2024 Stuff N Things
+# 2025
+2025 Stuff N Things
