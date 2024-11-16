@@ -44,6 +44,8 @@ New-NetFirewallRule -DisplayName "RDP server" -Program "C:\Windows\system32\svch
 # New-NetFirewallRule -DisplayName "SMTP server" -Direction Inbound -LocalPort 23,110,143,465,587,993,995,2525 -Protocol TCP -Action Allow
 New-NetFirewallRule -DisplayName "DHCP server" -Direction Inbound -LocalPort 67,68 -Protocol TCP -Action Allow
 New-NetFirewallRule -DisplayName "DHCP server" -Direction Inbound -LocalPort 67,68 -Protocol UDP -Action Allow
+New-NetFirewallRule -DisplayName "DHCP server" -Direction Outbound -LocalPort 67,68 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "DHCP server" -Direction Outbound -LocalPort 67,68 -Protocol UDP -Action Allow
 # New-NetFirewallRule -DisplayName "POP3 scoring" -Direction Inbound -LocalPort 110 -Protocol TCP -Action Allow
 # New-NetFirewallRule -DisplayName "POP3 scoring" -Direction Outbound -LocalPort 110 -Protocol TCP -Action Allow
 # New-NetFirewallRule -DisplayName "POP3 scoring UDP" -Direction Inbound -LocalPort 110 -Protocol UDP -Action Allow
