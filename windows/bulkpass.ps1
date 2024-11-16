@@ -1,5 +1,5 @@
 ﻿#Bulk password generator for AD users
-#Run as admin
+#Run as admin --> Syntax: ./bulkpass.ps1 "AD_Group_Name_Here" "Filepath_to_CSV_Output" "Length"
 param($Group, $Csv, $length)
 Import-Module ActiveDirectory
 
