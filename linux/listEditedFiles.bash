@@ -56,28 +56,9 @@ do
       ;;
   esac
 done
-if [[ -n "$outputFile" ]]; then
-  :> $outputFile
-  if [[ $scale == "d" ]]; then
-    [[ $excludeETC == 0 ]] && find /etc/ -mtime $duration -print >> $outputFile
-    [[ $excludeVARLOG == 0 ]] && find /var/log/ -mtime $duration -print >> $outputFile
-    [[ -n "$filePath" ]] && find $filePath -mtime $duration -print >> $outputFile
-    if [[ -n "$fileName" ]]; then
-      while read -r line; do
-        find $line -mtime $duration -print >> $outputFile
-      done < $fileName
-    fi
-  else
-    [[ $excludeETC -eq 0 ]] && find /etc/* -mmin $duration -print >> $outputFile
-    [[ $excludeVARLOG  -eq 0 ]] && find /var/log/* -mmin $duration -print >> $outputFile
-    [[ -n "$filePath" ]] && find $filePath -mmin $duration -print >> $outputFile
-    if [[ -n "$fileName" ]]; then
-      while read -r line; do
-        find $line -mmin $duration -print >> $outputFile
-      done < $fileName
-    fi
-  fi
-else
+
+function getEditedFiles()
+{
   if [[ $scale == "d" ]]; then
     [ $excludeETC -eq 0 ] && find /etc/* -mtime $duration -print
     [ $excludeVARLOG -eq 0 ] && find /var/log/* -mtime $duration -print
@@ -97,4 +78,11 @@ else
       done < $fileName
     fi
   fi
+}
+
+:> $outputFile
+if [[ -n "$outputFile" ]]; then
+  getEditedFiles > $outputFile
+else
+  getEditedFiles
 fi
