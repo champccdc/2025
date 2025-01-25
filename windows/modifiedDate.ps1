@@ -1,20 +1,42 @@
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Path,
+    [string]$Path, #put txt file to loop through directories listed in file or string of directory
 
     [Parameter(Mandatory=$false)][ValidateScript({ $_ -lt 0 })]
-    [int]$TimeBack,
+    [int]$TimeBack, #how far to go back
 
     [Parameter(Mandatory=$false)][ValidatePattern('^[dh]{1}$')]
-    [char]$BackScale,
+    [char]$BackScale, #earliest date in hours or days
 
-    [switch]$DirectoryOnly
+    [Parameter(Mandatory=$false)][ValidatePattern('^\.\w+')]
+    [string[]]$ExcludeExtension, #exclude files with specified extensions
+
+    [Parameter(Mandatory=$false)][ValidatePattern('^\.\w+')]
+    [string[]]$IncludeExtension, #Only add files with specified extenstions
+
+    [switch]$DirectoryOnly #cannot be used with -ExcludeExtension or -IncludeExtension
 )
 
-#$parentDir = "C:\Users\liamg\OneDrive\Desktop\C++"
+if ($DirectoryOnly -and ($PSBoundParameters.ContainsKey("ExcludeExtension") -or $PSBoundParameters.ContainsKey("IncludeExtension")))
+{
+    Write-Warning "Cannot use -DirectoryOnly with -IncludeExtension or -ExcludeExtension"
+    exit 1
+}
 if (-Not ($PSBoundParameters.ContainsKey("TimeBack"))) { $TimeBack = -1 }
 if (-Not ($PSBoundParameters.ContainsKey("BackScale"))) { $BackScale = 'd'}
 if (-Not ($PSBoundParameters.ContainsKey("Path"))) { $Path = "C:\" }
+if (-Not ((Test-Path -Path $Path) -or (Test-Path -Path $Path -PathType Leaf)))
+{
+    Write-Warning "Path specified does not lead to an existing directory or file"
+    exit 1
+}
+if ($PSBoundParameters.ContainsKey("ExcludeExtension") -and $PSBoundParameters.ContainsKey("IncludeExtension"))
+{
+    Write-Warning "Cannot use both -ExcludeExtension and -IncludeExtension"
+    exit 1
+}
+$extensionsIncluded = $false
+if ($PSBoundParameters.ContainsKey(("IncludeExtension"))) { $extensionsIncluded = $true }
 
 function getTimeBack()
 {
@@ -28,12 +50,12 @@ function getTimeBack()
     }
 }
 
-function returnDirectoriesModified($table)
+function returnDirectoriesModified()
 {
     $table = @()
     $numFilesChanged = 0
 
-    if (Test-Path -Path $Path)#if $Path param is a directory
+    if (Test-Path -Path $Path -PathType Container)#if $Path param is a directory
     {
         Get-ChildItem -LiteralPath $Path -Recurse -Directory | ForEach-Object {
             $numFilesChanged = (Get-ChildItem -LiteralPath $_.FullName | Where-Object { $_.LastWriteTime -gt (getTimeBack)}).Count
@@ -59,17 +81,25 @@ function returnDirectoriesModified($table)
     $table
 }
 
-function returnFilesModified($table)
+function returnFilesModified()
 {
     $table = @()
-    $fileAdded = 0
-    if (Test-Path -Path $Path) #if $Path param is a directory
+    if (Test-Path -Path $Path -PathType Container) #if $Path param is a directory
     {
         Get-ChildItem -LiteralPath $Path -Recurse | ForEach-Object {
-            if((Test-Path -LiteralPath $_.FullName -PathType Leaf) -and ($_.LastWriteTime -gt (getTimeBack)))
+            if((Test-Path -LiteralPath $_.FullName -PathType Leaf) -and ($_.LastWriteTime -gt (getTimeBack)) -and (-Not ($ExcludeExtension -contains $_.Extension)))
             {
-                $fileAdded++
-                addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $table
+                if ($extensionsIncluded)
+                {
+                    if ($IncludeExtension -contains $_.Extension)
+                    {
+                        addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $_.Extension $table
+                    }
+                }
+                else
+                {
+                    addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $_.Extension $table
+                }
             }
         }
     }
@@ -77,16 +107,23 @@ function returnFilesModified($table)
     {
         Get-Content $Path | ForEach-Object {
             Get-ChildItem -LiteralPath $_ -Recurse | ForEach-Object {
-                if((Test-Path -LiteralPath $_.FullName -PathType Leaf) -and ($_.LastWriteTime -gt (getTimeBack)))
+                if((Test-Path -LiteralPath $_.FullName -PathType Leaf) -and ($_.LastWriteTime -gt (getTimeBack)) -and (-Not ($ExcludeExtension -contains $_.Extension)))
                 {
-                    $fileAdded++
-                    addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $table
+                    if ($extensionsIncluded)
+                    {
+                        if ($IncludeExtension -contains $_.Extension)
+                        {
+                            addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $_.Extension $table
+                        }
+                    }
+                    else
+                    {
+                        addFileToObject $_.DirectoryName $_.Name $_.LastWriteTime.ToString("mm/dd HH:mm:ss") $_.Extension $table
+                    }
                 }
             }
         }
     }
-    Write-Host $fileAdded
-
     $table
 }
 
@@ -95,18 +132,19 @@ function addDirToObject($dir, $numFilesChanged, $lastModified, $changedTable)
     $changedTable += [pscustomobject]@{
         "Directory" = $dir
         "NumFilesChanged" = $numFilesChanged
-        "Last Modified" = $lastModified
+        "LastModified" = $lastModified
     }
 
     $changedTable
 }
 
-function addFileToObject($dir, $fileName, $lastModified, $changedTable)
+function addFileToObject($dir, $fileName, $lastModified, $ext, $changedTable)
 {
     $changedTable += [pscustomobject]@{
         "Directory" = $dir
-        "File Name" = $fileName
-        "Last Modified" = $lastModified
+        "FileName" = $fileName
+        "LastModified" = $lastModified
+        "Extension" = $ext
     }
 
     $changedTable
@@ -115,12 +153,10 @@ function addFileToObject($dir, $fileName, $lastModified, $changedTable)
 if ($DirectoryOnly)
 {
     $table = returnDirectoriesModified
+    $table
 }
 else
 {
     $table = returnFilesModified
+    $table | Sort-Object -Descending Extension | Select-Object Directory, FileName, LastModified
 }
-
-$table | Format-Table | Out-String
-
-
